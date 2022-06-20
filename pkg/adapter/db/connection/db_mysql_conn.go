@@ -1,11 +1,12 @@
 package connection
 
 import (
-	dbConf "Home/news/internal/config/db"
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+	dbConf "news/internal/config/db"
+	"news/pkg/adapter/db/model"
 	"time"
 )
 
@@ -23,7 +24,8 @@ func NewMySQLDriver(config dbConf.Database) (DbDriver, error) {
 		panic("failed to connect database")
 		//return nil, err
 	}
-
+	err = MigrateSchema(dbConn)
+	fmt.Println("Errorr", err)
 	return &DriverMySQL{
 		config: config,
 		db:     dbConn,
@@ -73,4 +75,13 @@ func connect(config dbConf.Database) (*gorm.DB, error) {
 
 func (m *DriverMySQL) Db() interface{} {
 	return m.db
+}
+
+var tables = []interface{}{
+	&model.KategoriModel{},
+	&model.UserModel{},
+}
+
+func MigrateSchema(db *gorm.DB) error {
+	return db.AutoMigrate(tables...)
 }

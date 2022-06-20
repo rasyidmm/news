@@ -1,0 +1,268 @@
+package tracing
+
+import (
+	"bytes"
+	"crypto/rand"
+	"fmt"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
+	"io"
+	"io/ioutil"
+
+	"news/pkg/shared/enum"
+	"news/pkg/shared/util"
+	"runtime"
+	"time"
+
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go/config"
+)
+
+type (
+	// TraceConfig defines the config for Trace middleware.
+	TraceConfig struct {
+		// Skipper defines a function to skip middleware.
+		Skipper middleware.Skipper
+
+		// OpenTracing Tracer instance which should be got before
+		Tracer opentracing.Tracer
+
+		// ComponentName used for describing the tracing component name
+		ComponentName string
+
+		// add req body & resp body to tracing tags
+		IsBodyDump bool
+
+		// prevent logging long http request bodies
+		LimitHTTPBody bool
+
+		// http body limit size (in bytes)
+		// NOTE: don't specify values larger than 60000 as jaeger can't handle values in span.LogKV larger than 60000 bytes
+		LimitSize int
+	}
+)
+
+func Init(e *echo.Echo, Service string, skipper middleware.Skipper) (opentracing.Tracer, io.Closer) {
+
+	varTrace := config.Configuration{
+		ServiceName: Service,
+		Sampler: &config.SamplerConfig{
+			Type:  "const",
+			Param: 1,
+		},
+		Reporter: &config.ReporterConfig{
+			LogSpans:            true,
+			BufferFlushInterval: 1 * time.Second,
+		},
+	}
+
+	cfg, err := varTrace.FromEnv()
+	if err != nil {
+		panic("Could not parse Jaeger env vars: " + err.Error())
+	}
+	tracer, closer, err := cfg.NewTracer()
+	if err != nil {
+		panic("Could not initialize jaeger tracer: " + err.Error())
+	}
+	opentracing.SetGlobalTracer(tracer)
+	e.Use(TraceWithConfig(Service, TraceConfig{
+		Tracer:  tracer,
+		Skipper: skipper,
+	}))
+
+	return tracer, closer
+}
+
+func CreateRootSpan(ctx echo.Context, name string) (opentracing.Span, opentracing.Tracer) {
+	parentSpan := opentracing.SpanFromContext(ctx.Request().Context())
+	tracer := parentSpan.Tracer()
+
+	// Get caller function name, file and line
+	pc := make([]uintptr, 15)
+	n := runtime.Callers(2, pc)
+	frames := runtime.CallersFrames(pc[:n])
+	frame, _ := frames.Next()
+	callerDetails := fmt.Sprintf("%s - %s#%d", frame.Function, frame.File, frame.Line)
+	parentSpan.SetTag("caller", callerDetails)
+
+	return parentSpan, tracer
+}
+
+//func StartRootSpan(ctx echo.Context, name string) (echo.Context, io.Closer, opentracing.Span) {
+//	tracer, closer := Init(name)
+//	sp := tracer.StartSpan(string(enum.StartService))
+//	ctx = opentracing.ContextWithSpan(ctx.Request().Context(), sp)
+//	return ctx, closer, sp
+//}
+
+// CreateChildSpan creates a new opentracing span adding tags for the span name and caller details. Returns a Span.
+// User must call `defer sp.Finish()`
+func CreateChildSpan(ctx echo.Context, name string) opentracing.Span {
+	parentSpan := opentracing.SpanFromContext(ctx.Request().Context())
+	sp := opentracing.StartSpan(
+		name,
+		opentracing.ChildOf(parentSpan.Context()))
+	sp.SetTag("name", name)
+
+	// Get caller function name, file and line
+	pc := make([]uintptr, 15)
+	n := runtime.Callers(2, pc)
+	frames := runtime.CallersFrames(pc[:n])
+	frame, _ := frames.Next()
+	callerDetails := fmt.Sprintf("%s - %s#%d", frame.Function, frame.File, frame.Line)
+	sp.SetTag("caller", callerDetails)
+
+	return sp
+}
+
+func CreateSubChildSpan(parentSpan opentracing.Span, name string) opentracing.Span {
+	sp := opentracing.StartSpan(
+		name,
+		opentracing.ChildOf(parentSpan.Context()))
+	sp.SetTag("name", name)
+
+	// Get caller function name, file and line
+	pc := make([]uintptr, 15)
+	n := runtime.Callers(2, pc)
+	frames := runtime.CallersFrames(pc[:n])
+	frame, _ := frames.Next()
+	callerDetails := fmt.Sprintf("%s - %s#%d", frame.Function, frame.File, frame.Line)
+	sp.SetTag("caller", callerDetails)
+
+	return sp
+}
+
+func LogRequest(sp opentracing.Span, req interface{}) {
+	sp.LogFields(log.Object(string(enum.Request), util.Stringify(req)))
+}
+
+func LogObject(sp opentracing.Span, name string, obj interface{}) {
+	sp.LogFields(log.Object(name, util.Stringify(obj)))
+}
+
+func LogResponse(sp opentracing.Span, resp interface{}) {
+	sp.LogFields(log.Object(string(enum.Response), util.Stringify(resp)))
+}
+
+func LogError(sp opentracing.Span, err error) {
+	sp.LogFields(log.Object(string(enum.Error), err))
+}
+
+func TraceWithConfig(nameService string, config TraceConfig) echo.MiddlewareFunc {
+	if config.Tracer == nil {
+		panic("echo: trace middleware requires opentracing tracer")
+	}
+	if config.Skipper == nil {
+		config.Skipper = middleware.DefaultSkipper
+	}
+	if config.ComponentName == "" {
+		config.ComponentName = nameService
+	}
+
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if config.Skipper(c) {
+				return next(c)
+			}
+
+			req := c.Request()
+			opname := "HTTP " + req.Method + " URL: " + c.Path()
+			realIP := c.RealIP()
+			requestID := getRequestID(c) // request-id generated by reverse-proxy
+
+			var sp opentracing.Span
+			var err error
+
+			ctx, err := config.Tracer.Extract(
+				opentracing.HTTPHeaders,
+				opentracing.HTTPHeadersCarrier(req.Header),
+			)
+
+			if err != nil {
+				sp = config.Tracer.StartSpan(opname)
+			} else {
+				sp = config.Tracer.StartSpan(opname, ext.RPCServerOption(ctx))
+			}
+			defer sp.Finish()
+
+			ext.HTTPMethod.Set(sp, req.Method)
+			ext.HTTPUrl.Set(sp, req.URL.String())
+			ext.Component.Set(sp, config.ComponentName)
+			sp.SetTag("client_ip", realIP)
+			sp.SetTag("request_id", requestID)
+
+			// Dump request & response body
+			var respDumper *responseDumper
+			if config.IsBodyDump {
+				// request
+				reqBody := []byte{}
+				if c.Request().Body != nil {
+					reqBody, _ = ioutil.ReadAll(c.Request().Body)
+
+					if config.LimitHTTPBody {
+						sp.LogKV("http.req.body", limitString(string(reqBody), config.LimitSize))
+					} else {
+						sp.LogKV("http.req.body", string(reqBody))
+					}
+				}
+
+				req.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody)) // reset original request body
+
+				// response
+				respDumper = newResponseDumper(c.Response())
+				c.Response().Writer = respDumper
+			}
+
+			// setup request context - add opentracing span
+			req = req.WithContext(opentracing.ContextWithSpan(req.Context(), sp))
+			c.SetRequest(req)
+
+			// call next middleware / controller
+			err = next(c)
+			if err != nil {
+				c.Error(err) // call custom registered error handler
+			}
+
+			status := c.Response().Status
+			ext.HTTPStatusCode.Set(sp, uint16(status))
+
+			if err != nil {
+				LogError(sp, err)
+			}
+
+			// Dump response body
+			if config.IsBodyDump {
+				if config.LimitHTTPBody {
+					sp.LogKV("http.resp.body", limitString(respDumper.GetResponse(), config.LimitSize))
+				} else {
+					sp.LogKV("http.resp.body", respDumper.GetResponse())
+				}
+			}
+
+			return nil // error was already processed with ctx.Error(err)
+		}
+	}
+}
+
+func getRequestID(ctx echo.Context) string {
+	requestID := ctx.Request().Header.Get(echo.HeaderXRequestID) // request-id generated by reverse-proxy
+	if requestID == "" {
+		requestID = generateToken() // missed request-id from proxy, we generate it manually
+	}
+	return requestID
+}
+
+func generateToken() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return fmt.Sprintf("%x", b)
+}
+func limitString(str string, size int) string {
+	if len(str) > size {
+		return str[:size/2] + "\n---- skipped ----\n" + str[len(str)-size/2:]
+	}
+
+	return str
+}

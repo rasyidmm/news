@@ -1,8 +1,8 @@
 package main
 
 import (
-	restfulApi "Home/news/pkg/infrastructure/restful/api"
 	"fmt"
+	restfulApi "news/pkg/infrastructure/restful/api"
 )
 
 func main() {

@@ -1,10 +1,10 @@
 package connection
 
 import (
-	dbConf "Home/news/internal/config/db"
-	"Home/news/pkg/shared/enum"
 	"errors"
 	"log"
+	dbConf "news/internal/config/db"
+	"news/pkg/shared/enum"
 	"sync"
 
 	_ "github.com/go-sql-driver/mysql"

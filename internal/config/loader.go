@@ -1,11 +1,11 @@
 package config
 
 import (
-	"Home/news/internal/config/db"
-	"Home/news/internal/config/server"
-	"Home/news/pkg/shared/util"
 	"fmt"
 	"github.com/spf13/viper"
+	"news/internal/config/db"
+	"news/internal/config/server"
+	"news/pkg/shared/util"
 	"os"
 	"strings"
 )

@@ -1,10 +1,10 @@
 package connection
 
 import (
-	"Home/news/internal/config"
-	dbConf "Home/news/internal/config/db"
 	"fmt"
 	"gorm.io/gorm"
+	"news/internal/config"
+	dbConf "news/internal/config/db"
 )
 
 var NewsDB *gorm.DB

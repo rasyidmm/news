@@ -1,9 +1,9 @@
 database:
-  Sandang:
+  News:
     mysql:
       host: localhost
       port: 3306
       username: root
-      password: root
-      dbname: sandang
+      password: P@ssw0rd
+      dbname: news_dev
       adapter: mysql
