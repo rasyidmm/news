@@ -1,11 +1,13 @@
 package user
 
+import "github.com/labstack/echo/v4"
+
 type UserInputPort interface {
-	UserCreate(interface{}) (interface{}, error)
-	UserList(interface{}) (interface{}, error)
-	UserGetById(interface{}) (interface{}, error)
-	UserUpdate(interface{}) (interface{}, error)
-	UserDelete(interface{}) (interface{}, error)
+	UserCreate(echo.Context, interface{}) (interface{}, error)
+	UserList(echo.Context, interface{}) (interface{}, error)
+	UserGetById(echo.Context, interface{}) (interface{}, error)
+	UserUpdate(echo.Context, interface{}) (interface{}, error)
+	UserDelete(echo.Context, interface{}) (interface{}, error)
 }
 
 type UserOutputPort interface {

@@ -6,6 +6,7 @@ import (
 	"news/pkg/adapter/repository/db"
 	dto "news/pkg/infrastructure/restful/service/dto"
 	"news/pkg/usecase/kategori"
+	"news/pkg/usecase/user"
 )
 
 // MetaData :
@@ -25,6 +26,7 @@ func NewContainer() *Container {
 	builder, _ := di.NewBuilder()
 	_ = builder.Add([]di.Def{
 		{Name: "kategori", Build: kategoriUsecase},
+		{Name: "user", Build: userUsecase},
 	}...)
 	return &Container{
 		ctn: builder.Build(),
@@ -40,4 +42,10 @@ func kategoriUsecase(_ di.Container) (interface{}, error) {
 	repo := db.NewKategoryDatahandler(connection.NewsDB)
 	out := &dto.KategoriBuilder{}
 	return kategori.NewKatergoriInteractor(repo, out), nil
+}
+
+func userUsecase(_ di.Container) (interface{}, error) {
+	repo := db.NewUserDataHandler(connection.NewsDB)
+	out := &dto.UserBuilder{}
+	return user.NewUserInteractor(repo, out), nil
 }

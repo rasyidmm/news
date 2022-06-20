@@ -7,11 +7,13 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"log"
 	cfg "news/internal/config"
-	kategor_servide "news/pkg/infrastructure/restful/service/kategori"
+	kategor_service "news/pkg/infrastructure/restful/service/kategori"
+	user_service "news/pkg/infrastructure/restful/service/user"
 	"news/pkg/infrastructure/router"
 	container "news/pkg/shared/di"
 	"news/pkg/shared/tracing"
 	"news/pkg/usecase/kategori"
+	"news/pkg/usecase/user"
 )
 
 func RunServer() {
@@ -36,5 +38,6 @@ func RunServer() {
 }
 
 func Apply(e *Apis.Echo, ctn *container.Container) {
-	router.NewKategoriRouter(e, kategor_servide.NewKategoriService(ctn.Resolve("kategori").(*kategori.KatergoriInteractor)))
+	router.NewKategoriRouter(e, kategor_service.NewKategoriService(ctn.Resolve("kategori").(*kategori.KatergoriInteractor)))
+	router.NewUserRouter(e, user_service.NewUserService(ctn.Resolve("user").(*user.UserInteractor)))
 }
