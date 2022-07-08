@@ -9,7 +9,7 @@ import (
 
 // BaseModels struct to generate model id
 type BaseModels struct {
-	Id       string `json:"id" gorm:"primaryKey"`
+	Id       string `json:"id" gorm:"primaryKey;unique"`
 	CreateBy string `gorm:"create_by"`
 	UpdateBy string `gorm:"update_by"`
 }

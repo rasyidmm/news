@@ -4,8 +4,10 @@ import (
 	"github.com/sarulabs/di"
 	"news/pkg/adapter/db/connection"
 	"news/pkg/adapter/repository/db"
+	"news/pkg/adapter/repository/file"
 	dto "news/pkg/infrastructure/restful/service/dto"
 	"news/pkg/usecase/kategori"
+	"news/pkg/usecase/photo"
 	"news/pkg/usecase/user"
 )
 
@@ -27,6 +29,7 @@ func NewContainer() *Container {
 	_ = builder.Add([]di.Def{
 		{Name: "kategori", Build: kategoriUsecase},
 		{Name: "user", Build: userUsecase},
+		{Name: "photo", Build: photoUsecase},
 	}...)
 	return &Container{
 		ctn: builder.Build(),
@@ -48,4 +51,11 @@ func userUsecase(_ di.Container) (interface{}, error) {
 	repo := db.NewUserDataHandler(connection.NewsDB)
 	out := &dto.UserBuilder{}
 	return user.NewUserInteractor(repo, out), nil
+}
+
+func photoUsecase(_ di.Container) (interface{}, error) {
+	repo := db.NewPhotoDataHanlder(connection.NewsDB)
+	repoFIle := file.NewFileLocalDataHandler()
+	out := &dto.PhotoBuilder{}
+	return photo.NewPhotoInteractor(repo, repoFIle, out), nil
 }

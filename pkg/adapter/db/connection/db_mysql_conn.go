@@ -80,6 +80,7 @@ func (m *DriverMySQL) Db() interface{} {
 var tables = []interface{}{
 	&model.KategoriModel{},
 	&model.UserModel{},
+	model.PhotoModel{},
 }
 
 func MigrateSchema(db *gorm.DB) error {

@@ -6,3 +6,6 @@ setup:
 
 run:
 	@go run cmd/server/restful/main.go
+
+swagger:
+	@swag init -g cmd/server/restful/main.go --output pkg/shared/document/swagger
