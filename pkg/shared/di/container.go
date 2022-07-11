@@ -6,6 +6,7 @@ import (
 	"news/pkg/adapter/repository/db"
 	"news/pkg/adapter/repository/file"
 	dto "news/pkg/infrastructure/restful/service/dto"
+	"news/pkg/usecase/authentication"
 	"news/pkg/usecase/kategori"
 	"news/pkg/usecase/photo"
 	"news/pkg/usecase/user"
@@ -30,6 +31,7 @@ func NewContainer() *Container {
 		{Name: "kategori", Build: kategoriUsecase},
 		{Name: "user", Build: userUsecase},
 		{Name: "photo", Build: photoUsecase},
+		{Name: "authentication", Build: authenticationUsecase},
 	}...)
 	return &Container{
 		ctn: builder.Build(),
@@ -58,4 +60,10 @@ func photoUsecase(_ di.Container) (interface{}, error) {
 	repoFIle := file.NewFileLocalDataHandler()
 	out := &dto.PhotoBuilder{}
 	return photo.NewPhotoInteractor(repo, repoFIle, out), nil
+}
+
+func authenticationUsecase(_ di.Container) (interface{}, error) {
+	repo := db.NewAuthenticationDataHandler(connection.NewsDB)
+	out := &dto.AuthenticationBuilder{}
+	return authentication.NewAuthenticationInteractor(repo, out), nil
 }

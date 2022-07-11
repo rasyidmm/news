@@ -42,7 +42,7 @@ func (d *UserDataHandler) UserCreate(span opentracing.Span, in interface{}) (int
 		Biography:      reqdata.Biography,
 		Email:          reqdata.Email,
 		NomerHandphone: reqdata.NomerHandphone,
-		Password:       reqdata.Password,
+		Password:       util.HashSha512(reqdata.Password),
 		JenisUser:      reqdata.JenisUser,
 	}
 	err := d.db.Debug().Create(&data).Error

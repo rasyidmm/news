@@ -9,10 +9,10 @@ import (
 )
 
 type CreatePhotoRequest struct {
-	FileBase64  string `json:"filebase64"`
-	FileName    string `json:"filename"`
-	TypeFile    string `json:"typefile"`
-	Description string `json:"description"`
+	FileBase64  string `json:"filebase64"  validate:"required"`
+	FileName    string `json:"filename" validate:"required"`
+	TypeFile    string `json:"typefile" validate:"required"`
+	Description string `json:"description" validate:"required"`
 }
 
 type PhotoListRequest struct {
@@ -21,7 +21,7 @@ type PhotoListRequest struct {
 	NamePhoto string `json:"namePhoto"`
 }
 type UpdatePhotoRequest struct {
-	Id          string `json:"id"`
+	Id          string `json:"id" validate:"required"`
 	FileBase64  string `json:"filebase64"`
 	FileName    string `json:"filename"`
 	TypeFile    string `json:"typefile"`
@@ -29,11 +29,11 @@ type UpdatePhotoRequest struct {
 }
 
 type DeletePhotoRequest struct {
-	Id string `json:"id"`
+	Id string `json:"id" validate:"required"`
 }
 
 type PhotoGetByIdRequest struct {
-	Id string `json:"id"`
+	Id string `json:"id" validate:"required"`
 }
 
 type PhotoService struct {

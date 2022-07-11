@@ -8,11 +8,13 @@ import (
 	_ "github.com/swaggo/echo-swagger/example/docs"
 	"log"
 	cfg "news/internal/config"
+	authentication_service "news/pkg/infrastructure/restful/service/authentication"
 	kategor_service "news/pkg/infrastructure/restful/service/kategori"
 	photo_service "news/pkg/infrastructure/restful/service/photo"
 	user_service "news/pkg/infrastructure/restful/service/user"
 	"news/pkg/infrastructure/router"
 	container "news/pkg/shared/di"
+	"news/pkg/usecase/authentication"
 	"news/pkg/usecase/photo"
 
 	//_ "news/pkg/shared/document/swagger"
@@ -61,4 +63,5 @@ func Apply(e *Apis.Echo, ctn *container.Container) {
 	router.NewKategoriRouter(e, kategor_service.NewKategoriService(ctn.Resolve("kategori").(*kategori.KatergoriInteractor)))
 	router.NewUserRouter(e, user_service.NewUserService(ctn.Resolve("user").(*user.UserInteractor)))
 	router.NewPhotoRouter(e, photo_service.NewPhotoService(ctn.Resolve("photo").(*photo.PhotoInteractor)))
+	router.NewAuthenticationRouter(e, authentication_service.NewAuthenticationService(ctn.Resolve("authentication").(*authentication.AuthenticationInteractor)))
 }

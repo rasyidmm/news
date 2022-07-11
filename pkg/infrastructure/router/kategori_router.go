@@ -1,8 +1,11 @@
 package router
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	service "news/pkg/infrastructure/restful/service/kategori"
+	"news/pkg/shared/jwtGen"
 )
 
 // Authenticate godoc
@@ -22,14 +25,18 @@ import (
 // @Failure 422 {object} utils.ResponseData
 // @Router /auth/external [post]
 type KategoriRouter struct {
-	serv service.KategoriService
+	serv      service.KategoriService
+	validator *validator.Validate
 }
 
 func NewKategoriRouter(e *echo.Echo, kategoriService *service.KategoriService) *echo.Echo {
+	e.Validator = &UserRouter{validator: validator.New()}
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
 	r := e.Group("/kategori")
-	r.GET("/", kategoriService.KategoriList)
-	r.POST("/", kategoriService.KategoriCreate)
+	r.GET("/", kategoriService.KategoriList, jwtGen.IsLoggedIn)
+	r.POST("/", kategoriService.KategoriCreate, jwtGen.IsLoggedIn)
 	r.GET("/:id", kategoriService.KategoriGetById)
 	r.PUT("/:id", kategoriService.KategoriUpdate)
 	r.DELETE("/:id", kategoriService.KategoriDelete)

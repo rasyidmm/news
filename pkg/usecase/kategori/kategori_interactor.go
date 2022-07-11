@@ -9,6 +9,7 @@ import (
 	"news/pkg/domain/entity"
 	"news/pkg/domain/repository"
 	"news/pkg/shared/enum"
+	"news/pkg/shared/jwtGen"
 	"news/pkg/shared/tracing"
 	"news/pkg/shared/util"
 )
@@ -127,6 +128,9 @@ func (s *KatergoriInteractor) KategoriList(ctx echo.Context, in interface{}) (in
 		tracing.LogError(sp, err)
 		return nil, status.Error(codes.InvalidArgument, "request parsing err")
 	}
+	resGet := jwtGen.GetClientMetadata(ctx)
+	tracing.LogObject(sp, "IsiJwt", resGet)
+
 	resData, err := s.repo.KategoriList(sp, request)
 	if err != nil {
 		tracing.LogError(sp, err)

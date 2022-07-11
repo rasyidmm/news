@@ -9,23 +9,23 @@ import (
 )
 
 type KategoriCreateRequest struct {
-	KategoriNama string `json:"kategorinama"`
-	KategoriCode string `json:"kategoricode"`
+	KategoriNama string `json:"kategorinama" validate:"required"`
+	KategoriCode string `json:"kategoricode" validate:"required"`
 }
 type KategoriListRequest struct {
 	CurPage int `json:"curPage"`
 	Limit   int `json:"limit"`
 }
 type KategoriGetByIdRequest struct {
-	KategoryId string `json:"KategoryId"`
+	KategoryId string `json:"KategoryId" validate:"required"`
 }
 type KategoriUpdateRequest struct {
-	KategoriNama string `json:"kategorinama"`
-	KategoriCode string `json:"kategoricode"`
+	KategoriNama string `json:"kategorinama" validate:"required"`
+	KategoriCode string `json:"kategoricode" validate:"required"`
 }
 
 type KategoriDeleteRequest struct {
-	KategoryId string `json:"KategoryId"`
+	KategoryId string `json:"KategoryId" validate:"required"`
 }
 
 type KategoriService struct {

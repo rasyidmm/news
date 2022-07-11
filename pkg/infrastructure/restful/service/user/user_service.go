@@ -9,17 +9,17 @@ import (
 )
 
 type UserCreateRequest struct {
-	Username       string `json:"username"`
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
+	Username       string `json:"username" validate:"required"`
+	FirstName      string `json:"first_name" validate:"required"`
+	LastName       string `json:"last_name" validate:"required"`
 	Twitter        string `json:"twitter"`
 	Facebook       string `json:"facebook"`
 	Instagram      string `json:"instagram"`
 	Biography      string `json:"biography"`
-	Email          string `json:"email"`
-	NomerHandphone string `json:"nomer_handphone"`
-	Password       string `json:"password"`
-	JenisUser      string `json:"jenis_user"`
+	Email          string `json:"email" validate:"required"`
+	NomerHandphone string `json:"nomer_handphone" validate:"required"`
+	Password       string `json:"password" validate:"required"`
+	JenisUser      string `json:"jenis_user" validate:"required"`
 }
 
 type UserListRequest struct {
@@ -43,11 +43,11 @@ type User struct {
 }
 
 type UserGetByIdRequest struct {
-	UserId string `json:"user_id"`
+	UserId string `json:"user_id"  validate:"required"`
 }
 
 type UserUpdateRequest struct {
-	Id             string `json:"id"`
+	Id             string `json:"id"  validate:"required"`
 	Username       string `json:"username"`
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
@@ -62,7 +62,7 @@ type UserUpdateRequest struct {
 }
 
 type UserDeleteRequest struct {
-	UserId string `json:"user_id"`
+	UserId string `json:"user_id"  validate:"required"`
 }
 
 type UserService struct {
@@ -84,6 +84,10 @@ func (s *UserService) UserCreate(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
+	if err := c.Validate(reqdata); err != nil {
+
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 	tracing.LogRequest(sp, reqdata)
 
 	var request *usecase.UserCreateRequest
