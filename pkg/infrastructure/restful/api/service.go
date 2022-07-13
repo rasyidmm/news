@@ -9,12 +9,16 @@ import (
 	"log"
 	cfg "news/internal/config"
 	authentication_service "news/pkg/infrastructure/restful/service/authentication"
+	comment_service "news/pkg/infrastructure/restful/service/comment"
 	kategor_service "news/pkg/infrastructure/restful/service/kategori"
+	news_service "news/pkg/infrastructure/restful/service/news"
 	photo_service "news/pkg/infrastructure/restful/service/photo"
 	user_service "news/pkg/infrastructure/restful/service/user"
 	"news/pkg/infrastructure/router"
 	container "news/pkg/shared/di"
 	"news/pkg/usecase/authentication"
+	"news/pkg/usecase/comment"
+	"news/pkg/usecase/news"
 	"news/pkg/usecase/photo"
 
 	//_ "news/pkg/shared/document/swagger"
@@ -46,12 +50,11 @@ func RunServer() {
 	fmt.Println(config)
 	e := Apis.New()
 	ctn := container.NewContainer()
-	//c := jaegertracing.New(e, nil)
-	//defer c.Close()
 
 	tracer, closer := tracing.Init(e, "news-me", nil)
 	defer closer.Close()
 	opentracing.SetGlobalTracer(tracer)
+
 	Apply(e, ctn)
 	svcPort := config.Server.Rest.Port
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -64,4 +67,6 @@ func Apply(e *Apis.Echo, ctn *container.Container) {
 	router.NewUserRouter(e, user_service.NewUserService(ctn.Resolve("user").(*user.UserInteractor)))
 	router.NewPhotoRouter(e, photo_service.NewPhotoService(ctn.Resolve("photo").(*photo.PhotoInteractor)))
 	router.NewAuthenticationRouter(e, authentication_service.NewAuthenticationService(ctn.Resolve("authentication").(*authentication.AuthenticationInteractor)))
+	router.NewNewsRouter(e, news_service.NewNewsService(ctn.Resolve("news").(*news.NewsInteractor)))
+	router.NewCommentRouter(e, comment_service.NewCommentService(ctn.Resolve("comment").(*comment.CommentInteractor)))
 }

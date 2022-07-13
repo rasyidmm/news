@@ -13,8 +13,9 @@ type KategoriCreateResponse struct {
 }
 
 type KategoriListRequest struct {
-	CurPage int
-	Limit   int
+	CurPage    int
+	Limit      int
+	UserAccess string
 }
 
 type Kategory struct {

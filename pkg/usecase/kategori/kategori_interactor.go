@@ -131,6 +131,7 @@ func (s *KatergoriInteractor) KategoriList(ctx echo.Context, in interface{}) (in
 	resGet := jwtGen.GetClientMetadata(ctx)
 	tracing.LogObject(sp, "IsiJwt", resGet)
 
+	request.UserAccess = resGet.Username
 	resData, err := s.repo.KategoriList(sp, request)
 	if err != nil {
 		tracing.LogError(sp, err)

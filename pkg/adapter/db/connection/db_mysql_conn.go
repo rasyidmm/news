@@ -82,6 +82,8 @@ var tables = []interface{}{
 	&model.UserModel{},
 	&model.PhotoModel{},
 	&model.LoginHistoryModel{},
+	&model.NewsModel{},
+	&model.CommentModel{},
 }
 
 func MigrateSchema(db *gorm.DB) error {
