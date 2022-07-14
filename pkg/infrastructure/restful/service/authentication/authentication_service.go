@@ -14,9 +14,6 @@ type LoginRequest struct {
 	Ipaddress string `json:"ip_address"`
 }
 
-type LoginResponse struct {
-}
-
 type AuthenticationService struct {
 	uc usecase.AuthenticationInputPort
 }

@@ -37,8 +37,8 @@ func NewKategoriRouter(e *echo.Echo, kategoriService *service.KategoriService) *
 	r := e.Group("/kategori")
 	r.GET("/", kategoriService.KategoriList, jwtGen.IsLoggedIn)
 	r.POST("/", kategoriService.KategoriCreate, jwtGen.IsLoggedIn)
-	r.GET("/:id", kategoriService.KategoriGetById)
-	r.PUT("/:id", kategoriService.KategoriUpdate)
-	r.DELETE("/:id", kategoriService.KategoriDelete)
+	r.GET("/:id", kategoriService.KategoriGetById, jwtGen.IsLoggedIn)
+	r.PUT("/:id", kategoriService.KategoriUpdate, jwtGen.IsLoggedIn)
+	r.DELETE("/:id", kategoriService.KategoriDelete, jwtGen.IsLoggedIn)
 	return e
 }

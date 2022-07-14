@@ -19,7 +19,11 @@ func NewNewsRouter(e *echo.Echo, newsService *service.NewsService) *echo.Echo {
 	e.Use(middleware.Recover())
 
 	r := e.Group("/news")
-	r.POST("/", newsService.CreateNews, jwtGen.IsLoggedIn)
+	r.POST("", newsService.CreateNews, jwtGen.IsLoggedIn)
+	r.POST("/getall", newsService.GetAllNews, jwtGen.IsLoggedIn)
+	r.POST("/getbyall", newsService.GetByAllNew, jwtGen.IsLoggedIn)
+	r.POST("/update", newsService.UpdateNews, jwtGen.IsLoggedIn)
+	r.POST("/delete", newsService.DeleteNews, jwtGen.IsLoggedIn)
 
 	return e
 }

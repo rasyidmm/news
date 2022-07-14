@@ -128,8 +128,14 @@ func (s *KatergoriInteractor) KategoriList(ctx echo.Context, in interface{}) (in
 		tracing.LogError(sp, err)
 		return nil, status.Error(codes.InvalidArgument, "request parsing err")
 	}
-	resGet := jwtGen.GetClientMetadata(ctx)
-	tracing.LogObject(sp, "IsiJwt", resGet)
+
+	resGet, errGer := jwtGen.GetClientMetadata(ctx)
+	if errGer != nil {
+		tracing.LogError(sp, errGer)
+		return nil, errGer
+	}
+
+	tracing.LogObject(sp, "GetClientMetadata", resGet)
 
 	request.UserAccess = resGet.Username
 	resData, err := s.repo.KategoriList(sp, request)

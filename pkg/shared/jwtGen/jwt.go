@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/opentracing/opentracing-go"
+	"net/http"
 	"news/pkg/shared/tracing"
 	"time"
 )
@@ -75,14 +76,25 @@ var IsLoggedIn = middleware.JWTWithConfig(middleware.JWTConfig{
 	SigningKey: SecretKey,
 })
 
-func GetClientMetadata(c echo.Context) JwtClaimResponse {
+func GetClientMetadata(c echo.Context) (JwtClaimResponse, error) {
+	var res JwtClaimResponse
 	user := c.Get("user").(*jwt.Token)
 	claim := user.Claims.(*JwtCustomClaims)
-	res := JwtClaimResponse{
+
+	if claim.Username == "" {
+		return res, c.JSON(http.StatusUnauthorized, "")
+	} else if claim.Email == "" {
+		return res, c.JSON(http.StatusUnauthorized, "")
+	} else if claim.UUID == "" {
+		return res, c.JSON(http.StatusUnauthorized, "")
+	} else if claim.JenisUser == "" {
+		return res, c.JSON(http.StatusUnauthorized, "")
+	}
+	res = JwtClaimResponse{
 		Username:  claim.Username,
 		Email:     claim.Email,
 		JenisUser: claim.JenisUser,
 		UUID:      claim.UUID,
 	}
-	return res
+	return res, nil
 }
