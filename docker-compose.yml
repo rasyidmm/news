@@ -1,11 +1,43 @@
-version: '3.1'
+version: '3.5'
 services:
   app:
     container_name: docker-news
-    build: ./
+    image: dockernews
     ports:
       - "8080:8080"
+    depends_on:
+      - db
     networks:
-      - local-bride
+      backendme:
+        ipv4_address: 172.21.0.2
+    command: ifconfig
+#    restart: unless-stopped
+  db:
+    container_name: docker-mysql
+    image: mysql:8.0
+    cap_add:
+      - SYS_NICE
+    restart: always
+    environment:
+      - MYSQL_DATABASE=news_dev
+      - MYSQL_ROOT_PASSWORD=P@ssw0rd
+    ports:
+      - '3306:3306'
+    volumes:
+      - db:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      backendme:
+        ipv4_address: 172.21.0.3
+
+volumes:
+  db:
+    driver: local
+
 networks:
-      local-bride:
+  backendme:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -  subnet: 172.21.0.0/16

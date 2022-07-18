@@ -18,7 +18,7 @@ func NewCommentRouter(e *echo.Echo, commentService *service.CommentService) *ech
 	e.Use(middleware.Recover())
 
 	r := e.Group("/comment")
-	r.POST("/", commentService.CreateComment, jwtGen.IsLoggedIn)
+	r.POST("", commentService.CreateComment, jwtGen.IsLoggedIn)
 	r.POST("/getall", commentService.GetAllComment, jwtGen.IsLoggedIn)
 	r.POST("/getbyall", commentService.GetByAllComment, jwtGen.IsLoggedIn)
 	r.POST("/update", commentService.DeleteComment, jwtGen.IsLoggedIn)

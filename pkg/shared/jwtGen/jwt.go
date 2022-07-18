@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/opentracing/opentracing-go"
+	"google.golang.org/grpc/status"
 	"net/http"
 	"news/pkg/shared/tracing"
 	"time"
@@ -61,8 +62,8 @@ func CreateJwtToken(span opentracing.Span, in interface{}) (interface{}, error) 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	t, err := token.SignedString(SecretKey)
 	if err != nil {
-		tracing.LogError(sp, err)
-		return nil, err
+		tracing.LogError(sp, status.Error(http.StatusBadRequest, err.Error()))
+		return nil, status.Error(http.StatusBadRequest, err.Error())
 	}
 	res := &TokenResponse{
 		Token:   t,

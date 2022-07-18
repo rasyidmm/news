@@ -24,18 +24,19 @@ func (d *AuthenticationDataHandler) CheckUsernamePassword(span opentracing.Span,
 	sp := tracing.CreateSubChildSpan(span, "CheckUsernamePassword")
 	defer sp.Finish()
 	tracing.LogRequest(sp, in)
+
 	reqData := in.(*entity.CheckUsernamePasswordRequest)
 	var data model.UserModel
 
 	q := d.db.Debug().Where("username = ?", reqData.Username).First(&data)
 	if q.Error != nil {
 		tracing.LogError(sp, q.Error)
-		return nil, q.Error
+		return nil, status.Error(http.StatusUnauthorized, q.Error.Error())
 	}
 
 	tracing.LogObject(sp, "data", data)
 	if data.Password != util.HashSha512(reqData.Password) {
-		return nil, status.Error(http.StatusBadRequest, "Authentication Failed")
+		return nil, status.Error(http.StatusUnauthorized, "Authentication Failed")
 	}
 	res := &entity.CheckUsernamePasswordResponse{
 		Username:       data.Username,
@@ -78,8 +79,8 @@ func (d *AuthenticationDataHandler) LoginHistorySave(span opentracing.Span, in i
 
 	err := d.db.Debug().Create(&data).Error
 	if err != nil {
-		tracing.LogError(sp, err)
-		return nil, err
+		tracing.LogError(sp, status.Error(http.StatusBadRequest, err.Error()))
+		return nil, status.Error(http.StatusBadRequest, err.Error())
 	}
 	res := &entity.LoginHistorySaveResponse{
 		StatusCode: "00",

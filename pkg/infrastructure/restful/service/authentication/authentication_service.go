@@ -25,7 +25,7 @@ func NewAuthenticationService(u usecase.AuthenticationInputPort) *Authentication
 }
 
 func (s *AuthenticationService) Login(c echo.Context) error {
-	sp, _ := tracing.CreateRootSpan(c, "KategoriCreate")
+	sp, _ := tracing.CreateRootSpan(c, "Login")
 	defer sp.Finish()
 
 	reqdata := new(LoginRequest)

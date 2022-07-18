@@ -1,11 +1,12 @@
-FROM golang:1.17-alpine
+FROM golang:1.18-alpine3.16
 
-RUN apk update && apk add curl \
+RUN apk update && apk upgrade && apk add curl \
                           git \
                           protobuf \
                           bash \
                           make \
-                          openssh-client && \
+                         busybox-extras \
+                        openssh-client && \
      rm -rf /var/cache/apk/*
 
 WORKDIR /app
@@ -17,9 +18,8 @@ RUN go mod download
 
 COPY . .
 
-RUN make setup
-
-RUN make run
-
+RUN make build
 
 EXPOSE 8080
+#RUN make rest
+ENTRYPOINT ["./main"]

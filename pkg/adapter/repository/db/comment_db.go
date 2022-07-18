@@ -106,6 +106,19 @@ func (d *CommentDataHandler) GetByAllComment(span opentracing.Span, in interface
 	var data []model.CommentModel
 
 	q := d.db.Debug()
+
+	if reqData.Username != "" {
+		q = q.Where("username = ?", reqData.Username)
+	}
+
+	if reqData.NewsId != "" {
+		q = q.Where("news_id = ?", reqData.NewsId)
+	}
+
+	if reqData.CommentText != "" {
+		comment := "%" + reqData.CommentText + "%"
+		q = q.Where("comment_text like ?", comment)
+	}
 	q = q.Order("updated_at desc")
 	var countAll int64
 	q.Model(&model.CommentModel{}).Count(&countAll)
