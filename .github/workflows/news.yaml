@@ -1,0 +1,12 @@
+name: news
+
+on:
+  push:
+    branches:
+      - master
+jobs:
+  news:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: news
+        run: echo "hello news"
